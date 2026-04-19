@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import type { AppUser } from '../types/catalog'
 
-defineProps<{
-  userName: string
+const props = defineProps<{
+  user: AppUser
 }>()
 
 const emit = defineEmits<{
@@ -34,11 +35,11 @@ function logout() {
     </div>
 
     <div class="user-dropdown">
-      <button type="button" class="user-menu" aria-label="Abrir opcoes do usuario" @click="toggleMenu">
-        <div class="avatar" aria-hidden="true">{{ userName.charAt(0).toUpperCase() }}</div>
+      <button type="button" class="user-menu" aria-label="Abrir opções do usuário" @click="toggleMenu">
+        <div class="avatar" aria-hidden="true">{{ props.user.name.charAt(0).toUpperCase() }}</div>
         <div>
-          <strong>{{ userName }}</strong>
-          <span>Administrador</span>
+          <strong>{{ props.user.name }}</strong>
+          <span>{{ props.user.username }}</span>
         </div>
       </button>
 

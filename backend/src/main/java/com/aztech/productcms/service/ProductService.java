@@ -26,21 +26,24 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final CategoryAttributeRepository attributeRepository;
+    private final ProductEventPublisher eventPublisher;
 
     public ProductService(
             ProductRepository productRepository,
             CategoryRepository categoryRepository,
-            CategoryAttributeRepository attributeRepository
+            CategoryAttributeRepository attributeRepository,
+            ProductEventPublisher eventPublisher
     ) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.attributeRepository = attributeRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
     public ProductResponseDTO create(ProductRequestDTO request) {
         Category category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Categoria nao encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada"));
 
         validateAttributes(request, category.getId());
 
@@ -57,16 +60,18 @@ public class ProductService {
             ));
         }
 
-        return toResponse(productRepository.save(product));
+        Product savedProduct = productRepository.save(product);
+        eventPublisher.publish("CREATED", savedProduct);
+        return toResponse(savedProduct);
     }
 
     @Transactional
     public ProductResponseDTO update(Long id, ProductRequestDTO request) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Produto nao encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado"));
 
         Category category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Categoria nao encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada"));
 
         validateAttributes(request, category.getId());
 
@@ -82,7 +87,9 @@ public class ProductService {
             ));
         }
 
-        return toResponse(productRepository.save(product));
+        Product savedProduct = productRepository.save(product);
+        eventPublisher.publish("UPDATED", savedProduct);
+        return toResponse(savedProduct);
     }
 
     @Transactional(readOnly = true)
@@ -92,7 +99,7 @@ public class ProductService {
             products = productRepository.findAll();
         } else {
             if (!categoryRepository.existsById(categoryId)) {
-                throw new ResourceNotFoundException("Categoria nao encontrada");
+                throw new ResourceNotFoundException("Categoria não encontrada");
             }
             products = productRepository.findByCategoryId(categoryId);
         }
@@ -106,7 +113,16 @@ public class ProductService {
     public ProductResponseDTO findById(Long id) {
         return productRepository.findById(id)
                 .map(this::toResponse)
-                .orElseThrow(() -> new ResourceNotFoundException("Produto nao encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado"));
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado"));
+
+        eventPublisher.publish("DELETED", product);
+        productRepository.delete(product);
     }
 
     private void validateAttributes(ProductRequestDTO request, Long categoryId) {
@@ -126,7 +142,7 @@ public class ProductService {
                 .filter(attribute -> !allowedAttributes.contains(attribute))
                 .findFirst()
                 .ifPresent(attribute -> {
-                    throw new BusinessException("Atributo invalido para a categoria selecionada: " + attribute);
+                    throw new BusinessException("Atributo inválido para a categoria selecionada: " + attribute);
                 });
     }
 

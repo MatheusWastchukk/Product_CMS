@@ -40,16 +40,19 @@ class ProductServiceTest {
     @Mock
     private CategoryAttributeRepository attributeRepository;
 
+    @Mock
+    private ProductEventPublisher eventPublisher;
+
     private ProductService productService;
 
     @BeforeEach
     void setUp() {
-        productService = new ProductService(productRepository, categoryRepository, attributeRepository);
+        productService = new ProductService(productRepository, categoryRepository, attributeRepository, eventPublisher);
     }
 
     @Test
     void shouldCreateProductWithValidCategoryAndAttributes() {
-        Category category = new Category("Eletronico");
+        Category category = new Category("Eletrônico");
         category.setId(1L);
 
         ProductRequestDTO request = new ProductRequestDTO(
@@ -79,7 +82,7 @@ class ProductServiceTest {
 
         assertEquals(10L, response.id());
         assertEquals("Notebook X", response.name());
-        assertEquals("Eletronico", response.categoryName());
+        assertEquals("Eletrônico", response.categoryName());
         assertEquals(2, response.attributes().size());
         verify(productRepository).save(any(Product.class));
     }
@@ -101,7 +104,7 @@ class ProductServiceTest {
                 () -> productService.create(request)
         );
 
-        assertEquals("Categoria nao encontrada", exception.getMessage());
+        assertEquals("Categoria não encontrada", exception.getMessage());
         verify(productRepository, never()).save(any(Product.class));
     }
 
@@ -122,12 +125,12 @@ class ProductServiceTest {
         when(attributeRepository.findByCategoryId(3L)).thenReturn(List.of(
                 new CategoryAttribute("autor", category),
                 new CategoryAttribute("editora", category),
-                new CategoryAttribute("paginas", category)
+                new CategoryAttribute("páginas", category)
         ));
 
         BusinessException exception = assertThrows(BusinessException.class, () -> productService.create(request));
 
-        assertTrue(exception.getMessage().contains("Atributo invalido"));
+        assertTrue(exception.getMessage().contains("Atributo inválido"));
         verify(productRepository, never()).save(any(Product.class));
     }
 }

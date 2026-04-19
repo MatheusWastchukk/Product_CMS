@@ -2,8 +2,8 @@
 .vscode/
 
 backend/target/
-backend/.mvn/wrapper/maven-wrapper.jar
 backend/.env
+audit-service/target/
 .env
 
 frontend/node_modules/

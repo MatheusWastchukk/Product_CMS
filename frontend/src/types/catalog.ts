@@ -38,3 +38,26 @@ export interface ProductPayload {
   categoryId: number | null
   attributes: ProductAttribute[]
 }
+
+export interface AppUser {
+  id: number
+  name: string
+  username: string
+  email: string | null
+  role: string
+}
+
+export interface AuthResponse {
+  token: string
+  user: AppUser
+}
+
+export interface UserPayload {
+  name: string
+  username: string
+  email: string
+}
+
+export interface UserUpdatePayload extends UserPayload {
+  resetPassword: boolean
+}

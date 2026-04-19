@@ -1,63 +1,116 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import { Plus, UserRound } from 'lucide-vue-next'
+import { Edit3, Plus, RotateCcw, Save, Trash2, UserRound, X } from 'lucide-vue-next'
+import { createUser, deleteUser, getUsers, updateUser } from '../services/api'
+import type { AppUser } from '../types/catalog'
 
 const props = defineProps<{
-  currentUser: string
+  currentUser: AppUser
 }>()
-
-interface AppUser {
-  id: number
-  name: string
-  password: string
-}
 
 const users = ref<AppUser[]>([])
 const activeUserTab = ref<'create' | 'list'>('create')
+const editingUser = ref<AppUser | null>(null)
+const loading = ref(false)
+
 const form = reactive({
-  name: ''
+  name: '',
+  username: '',
+  email: ''
 })
 
-function loadUsers() {
-  const savedUsers = localStorage.getItem('productCmsUsers')
-  users.value = savedUsers ? JSON.parse(savedUsers) : []
-  ensureCurrentUser()
-}
+const editForm = reactive({
+  name: '',
+  username: '',
+  email: '',
+  resetPassword: false
+})
 
-function saveUsers() {
-  localStorage.setItem('productCmsUsers', JSON.stringify(users.value))
-}
-
-function ensureCurrentUser() {
-  if (!props.currentUser) {
-    return
-  }
-
-  const exists = users.value.some((user) => user.name.toLowerCase() === props.currentUser.toLowerCase())
-  if (!exists) {
-    users.value.unshift({
-      id: Date.now(),
-      name: props.currentUser,
-      password: 'senha'
-    })
-    saveUsers()
+async function loadUsers() {
+  loading.value = true
+  try {
+    users.value = await getUsers()
+  } catch {
+    alert('Não foi possível carregar os usuários.')
+  } finally {
+    loading.value = false
   }
 }
 
-function createUser() {
+async function createNewUser() {
   const name = form.name.trim()
-  if (!name) {
-    alert('Informe o nome do usuario.')
+  const username = form.username.trim()
+  const email = form.email.trim()
+
+  if (!name || !username) {
+    alert('Informe nome e usuário.')
     return
   }
 
-  users.value.push({
-    id: Date.now(),
-    name,
-    password: 'senha'
-  })
-  form.name = ''
-  saveUsers()
+  try {
+    await createUser({ name, username, email })
+    form.name = ''
+    form.username = ''
+    form.email = ''
+    activeUserTab.value = 'list'
+    await loadUsers()
+  } catch {
+    alert('Não foi possível criar o usuário. Verifique se o usuário ou e-mail já existe.')
+  }
+}
+
+function openEditModal(user: AppUser) {
+  editingUser.value = user
+  editForm.name = user.name
+  editForm.username = user.username
+  editForm.email = user.email ?? ''
+  editForm.resetPassword = false
+}
+
+async function saveEditedUser() {
+  if (!editingUser.value) {
+    return
+  }
+
+  const name = editForm.name.trim()
+  const username = editForm.username.trim()
+  const email = editForm.email.trim()
+
+  if (!name || !username) {
+    alert('Informe nome e usuário.')
+    return
+  }
+
+  try {
+    await updateUser(editingUser.value.id, {
+      name,
+      username,
+      email,
+      resetPassword: editForm.resetPassword
+    })
+    editingUser.value = null
+    await loadUsers()
+  } catch {
+    alert('Não foi possível atualizar o usuário.')
+  }
+}
+
+async function removeUser(user: AppUser) {
+  if (user.id === props.currentUser.id) {
+    alert('Você não pode excluir o usuário logado.')
+    return
+  }
+
+  if (!confirm(`Excluir o usuário "${user.name}"?`)) {
+    return
+  }
+
+  try {
+    await deleteUser(user.id)
+    await loadUsers()
+  } catch {
+    alert('Não foi possível excluir o usuário.')
+  }
 }
 
 onMounted(loadUsers)
@@ -65,7 +118,7 @@ onMounted(loadUsers)
 
 <template>
   <section class="tab-page">
-    <div class="subtabs" aria-label="Abas de usuarios">
+    <div class="subtabs" aria-label="Abas de usuários">
       <button
         type="button"
         :class="{ active: activeUserTab === 'create' }"
@@ -78,42 +131,57 @@ onMounted(loadUsers)
         :class="{ active: activeUserTab === 'list' }"
         @click="activeUserTab = 'list'"
       >
-        Usuarios cadastrados
+        Usuários cadastrados
       </button>
     </div>
 
     <section v-if="activeUserTab === 'create'" class="panel user-panel">
       <div class="section-heading">
-        <p class="eyebrow">Usuarios</p>
-        <h2>Criar usuario</h2>
-        <p>Novos usuarios recebem a senha padrao senha.</p>
+        <p class="eyebrow">Usuários</p>
+        <h2>Criar usuário</h2>
+        <p>Novos usuários recebem a senha padrão.</p>
       </div>
 
-      <form class="profile-form" @submit.prevent="createUser">
+      <form class="profile-form" @submit.prevent="createNewUser">
         <label class="field">
           <span>Nome</span>
           <input v-model="form.name" placeholder="Maria Silva" />
         </label>
 
+        <label class="field">
+          <span>Usuário</span>
+          <input v-model="form.username" autocomplete="username" placeholder="maria.silva" />
+        </label>
+
+        <label class="field">
+          <span>E-mail</span>
+          <input v-model="form.email" type="email" placeholder="maria@email.com" />
+        </label>
+
         <button type="submit">
           <Plus :size="18" />
-          Criar usuario
+          Criar usuário
         </button>
       </form>
     </section>
 
     <section v-else class="panel user-panel">
       <div class="section-heading">
-        <p class="eyebrow">Usuarios</p>
-        <h2>Usuarios cadastrados</h2>
-        <p>Lista mantida localmente no navegador.</p>
+        <p class="eyebrow">Usuários</p>
+        <h2>Usuários cadastrados</h2>
+        <p>Lista carregada pela API do backend.</p>
       </div>
 
-      <table v-if="users.length > 0" class="data-table">
+      <p v-if="loading" class="empty-note">Carregando usuários...</p>
+
+      <table v-else-if="users.length > 0" class="data-table">
         <thead>
           <tr>
             <th>ID</th>
-            <th>Usuario</th>
+            <th>Nome</th>
+            <th>Usuário</th>
+            <th>E-mail</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -125,10 +193,68 @@ onMounted(loadUsers)
                 {{ user.name }}
               </span>
             </td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email || 'Não informado' }}</td>
+            <td>
+              <div class="table-actions">
+                <button type="button" class="icon-button" title="Editar" @click="openEditModal(user)">
+                  <Edit3 :size="17" />
+                </button>
+                <button type="button" class="icon-button danger-icon" title="Excluir" @click="removeUser(user)">
+                  <Trash2 :size="17" />
+                </button>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
-      <p v-else class="empty-note">Nenhum usuario criado ainda.</p>
+      <p v-else class="empty-note">Nenhum usuário criado ainda.</p>
     </section>
+
+    <div v-if="editingUser" class="profile-backdrop" role="presentation" @click.self="editingUser = null">
+      <section class="profile-panel" aria-labelledby="edit-user-title">
+        <div class="section-heading">
+          <p class="eyebrow">Usuário</p>
+          <h2 id="edit-user-title">Editar usuário</h2>
+          <p>Atualize nome, usuário, e-mail ou redefina a senha padrão.</p>
+        </div>
+
+        <form class="profile-form" @submit.prevent="saveEditedUser">
+          <label class="field">
+            <span>Nome</span>
+            <input v-model="editForm.name" />
+          </label>
+
+          <label class="field">
+            <span>Usuário</span>
+            <input v-model="editForm.username" />
+          </label>
+
+          <label class="field">
+            <span>E-mail</span>
+            <input v-model="editForm.email" type="email" />
+          </label>
+
+          <label class="check-field">
+            <input v-model="editForm.resetPassword" type="checkbox" />
+            <span>
+              <RotateCcw :size="17" />
+              Resetar senha
+            </span>
+          </label>
+
+          <div class="profile-actions">
+            <button type="button" class="ghost-button" @click="editingUser = null">
+              <X :size="18" />
+              Cancelar
+            </button>
+            <button type="submit">
+              <Save :size="18" />
+              Salvar usuário
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
   </section>
 </template>

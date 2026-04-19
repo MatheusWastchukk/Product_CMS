@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import type { AppUser } from '../types/catalog'
 
 const props = defineProps<{
-  userName: string
+  user: AppUser
 }>()
 
 const emit = defineEmits<{
   close: []
   logout: []
-  save: [payload: { userName: string; password: string }]
+  save: [payload: { name: string; password: string }]
 }>()
 
 const form = reactive({
-  userName: props.userName,
+  name: props.user.name,
   password: '',
   confirmPassword: ''
 })
@@ -20,18 +21,18 @@ const form = reactive({
 const error = ref('')
 
 function submit() {
-  if (!form.userName.trim()) {
-    error.value = 'Informe o nome do usuario.'
+  if (!form.name.trim()) {
+    error.value = 'Informe o nome do usuário.'
     return
   }
 
   if (form.password !== form.confirmPassword) {
-    error.value = 'A confirmacao de senha precisa ser igual a senha digitada.'
+    error.value = 'A confirmação de senha precisa ser igual à senha digitada.'
     return
   }
 
   emit('save', {
-    userName: form.userName.trim(),
+    name: form.name.trim(),
     password: form.password
   })
 }
@@ -41,15 +42,20 @@ function submit() {
   <div class="profile-backdrop" role="presentation" @click.self="emit('close')">
     <section class="profile-panel" aria-labelledby="profile-title">
       <div class="section-heading">
-        <p class="eyebrow">Usuario</p>
+        <p class="eyebrow">Usuário</p>
         <h2 id="profile-title">Editar perfil</h2>
-        <p>Atualize o nome exibido no sistema e defina uma nova senha local.</p>
+        <p>Atualize o nome exibido no sistema e defina uma nova senha de acesso.</p>
       </div>
 
       <form class="profile-form" @submit.prevent="submit">
         <label class="field">
           <span>Nome</span>
-          <input v-model="form.userName" />
+          <input v-model="form.name" />
+        </label>
+
+        <label class="field">
+          <span>Usuário</span>
+          <input :value="props.user.username" disabled />
         </label>
 
         <label class="field">
@@ -66,7 +72,7 @@ function submit() {
 
         <div class="profile-actions">
           <button type="button" class="ghost-button" @click="emit('close')">Cancelar</button>
-          <button type="submit">Salvar alteracoes</button>
+          <button type="submit">Salvar alterações</button>
         </div>
       </form>
     </section>

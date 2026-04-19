@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Edit3 } from 'lucide-vue-next'
+import { Edit3, Trash2 } from 'lucide-vue-next'
 import type { Product } from '../types/catalog'
 
 defineProps<{
@@ -9,6 +9,7 @@ defineProps<{
 
 const emit = defineEmits<{
   edit: [product: Product]
+  delete: [product: Product]
 }>()
 
 function formatPrice(price: number) {
@@ -22,7 +23,7 @@ function formatPrice(price: number) {
 <template>
   <section class="panel list-panel" aria-labelledby="product-list-title">
     <div class="section-heading">
-      <p class="eyebrow">Catalogo</p>
+      <p class="eyebrow">Catálogo</p>
       <h2 id="product-list-title">Produtos cadastrados</h2>
       <p>Lista atualizada a partir da API Spring Boot.</p>
     </div>
@@ -38,9 +39,9 @@ function formatPrice(price: number) {
           <th>ID</th>
           <th>Nome</th>
           <th>Categoria</th>
-          <th>Preco</th>
+          <th>Preço</th>
           <th>Atributos</th>
-          <th>Acoes</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -48,7 +49,7 @@ function formatPrice(price: number) {
           <td>{{ product.id }}</td>
           <td>
             <strong>{{ product.name }}</strong>
-            <span class="table-description">{{ product.description || 'Sem descricao informada.' }}</span>
+            <span class="table-description">{{ product.description || 'Sem descrição informada.' }}</span>
           </td>
           <td>{{ product.categoryName }}</td>
           <td>{{ formatPrice(product.price) }}</td>
@@ -62,9 +63,14 @@ function formatPrice(price: number) {
             <span v-else class="empty-note">Sem atributos</span>
           </td>
           <td>
-            <button type="button" class="icon-button" title="Editar" @click="emit('edit', product)">
-              <Edit3 :size="17" />
-            </button>
+            <div class="table-actions">
+              <button type="button" class="icon-button" title="Editar" @click="emit('edit', product)">
+                <Edit3 :size="17" />
+              </button>
+              <button type="button" class="icon-button danger-icon" title="Excluir" @click="emit('delete', product)">
+                <Trash2 :size="17" />
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>

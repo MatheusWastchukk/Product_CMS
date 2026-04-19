@@ -50,7 +50,7 @@ async function submit() {
     })
 
     if (duplicatedAttribute) {
-      showError(`O atributo "${duplicatedAttribute.name}" esta duplicado.`)
+      showError(`O atributo "${duplicatedAttribute.name}" está duplicado.`)
       return
     }
 
@@ -64,7 +64,7 @@ async function submit() {
     feedback.value = 'Categoria cadastrada com sucesso.'
     emit('changed')
   } catch {
-    showError('Nao foi possivel salvar a categoria. Verifique se ela ja existe.')
+    showError('Não foi possível salvar a categoria. Verifique se ela já existe.')
   } finally {
     saving.value = false
   }
@@ -100,7 +100,7 @@ async function removeCategory(category: Category) {
     await deleteCategory(category.id)
     emit('changed')
   } catch {
-    showError('Nao foi possivel excluir a categoria. Verifique se ela possui produtos cadastrados.')
+    showError('Não foi possível excluir a categoria. Verifique se ela possui produtos cadastrados.')
   }
 }
 </script>
@@ -191,7 +191,7 @@ async function removeCategory(category: Category) {
             <tr>
               <th>ID</th>
               <th>Nome</th>
-              <th>Acoes</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody>

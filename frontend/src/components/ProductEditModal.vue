@@ -56,7 +56,7 @@ watch(
       })
       syncAttributes()
     } catch {
-      alert('Nao foi possivel carregar os atributos da categoria.')
+      alert('Não foi possível carregar os atributos da categoria.')
     } finally {
       loadingAttributes.value = false
     }
@@ -77,7 +77,7 @@ function syncAttributes() {
 
 async function submit() {
   if (!canSubmit.value || form.categoryId === null) {
-    alert('Preencha nome, preco e categoria antes de salvar.')
+    alert('Preencha nome, preço e categoria antes de salvar.')
     return
   }
 
@@ -92,7 +92,7 @@ async function submit() {
     })
     emit('saved')
   } catch {
-    alert('Nao foi possivel atualizar o produto.')
+    alert('Não foi possível atualizar o produto.')
   } finally {
     saving.value = false
   }
@@ -105,7 +105,7 @@ async function submit() {
       <div class="section-heading">
         <p class="eyebrow">Produto</p>
         <h2 id="edit-product-title">Editar produto</h2>
-        <p>Atualize dados fixos e atributos dinamicos.</p>
+        <p>Atualize dados fixos e atributos dinâmicos.</p>
       </div>
 
       <form class="product-form" @submit.prevent="submit">
@@ -115,13 +115,13 @@ async function submit() {
         </label>
 
         <label class="field">
-          <span>Descricao</span>
+          <span>Descrição</span>
           <textarea v-model="form.description"></textarea>
         </label>
 
         <div class="form-grid">
           <label class="field">
-            <span>Preco</span>
+            <span>Preço</span>
             <input v-model.number="form.price" type="number" min="0" step="0.01" />
           </label>
 
@@ -136,7 +136,7 @@ async function submit() {
         </div>
 
         <div class="attributes-block">
-          <h3>Atributos dinamicos</h3>
+          <h3>Atributos dinâmicos</h3>
           <p v-if="loadingAttributes">Carregando atributos...</p>
           <DynamicAttributesForm
             :attributes="dynamicAttributes"

@@ -9,10 +9,20 @@ import ProductEditModal from '../components/ProductEditModal.vue'
 import ProductList from '../components/ProductList.vue'
 import UserProfileModal from '../components/UserProfileModal.vue'
 import UsersManager from '../components/UsersManager.vue'
-import { getCategories, getProducts } from '../services/api'
-import type { Category, Product } from '../types/catalog'
+import {
+  clearSession,
+  deleteProduct,
+  getCategories,
+  getProducts,
+  getStoredToken,
+  getStoredUser,
+  login,
+  logout,
+  updateProfile
+} from '../services/api'
+import type { AppUser, Category, Product } from '../types/catalog'
 
-const loggedUser = ref(localStorage.getItem('productCmsUser') ?? '')
+const currentUser = ref<AppUser | null>(getStoredToken() ? getStoredUser() : null)
 const profileOpen = ref(false)
 const activeTab = ref<'categories' | 'products' | 'users'>('products')
 const activeProductTab = ref<'create' | 'list'>('create')
@@ -40,7 +50,7 @@ async function loadCategories() {
   try {
     categories.value = await getCategories()
   } catch {
-    showError('Nao foi possivel carregar as categorias.')
+    showError('Não foi possível carregar as categorias.')
   } finally {
     loadingCategories.value = false
   }
@@ -51,7 +61,7 @@ async function loadProducts() {
   try {
     products.value = await getProducts()
   } catch {
-    showError('Nao foi possivel carregar os produtos.')
+    showError('Não foi possível carregar os produtos.')
   } finally {
     loadingProducts.value = false
   }
@@ -61,24 +71,36 @@ function showError(message: string) {
   alert(message)
 }
 
-function handleLogin(userName: string) {
-  loggedUser.value = userName
-  localStorage.setItem('productCmsUser', userName)
-}
-
-function handleLogout() {
-  loggedUser.value = ''
-  profileOpen.value = false
-  localStorage.removeItem('productCmsUser')
-}
-
-function handleProfileSave(payload: { userName: string; password: string }) {
-  loggedUser.value = payload.userName
-  localStorage.setItem('productCmsUser', payload.userName)
-  if (payload.password) {
-    localStorage.setItem('productCmsPassword', payload.password)
+async function handleLogin(payload: { username: string; password: string }) {
+  try {
+    const auth = await login(payload.username, payload.password)
+    currentUser.value = auth.user
+    await Promise.all([loadCategories(), loadProducts()])
+  } catch {
+    showError('Usuário ou senha inválidos.')
   }
-  profileOpen.value = false
+}
+
+async function handleLogout() {
+  try {
+    await logout()
+  } catch {
+    clearSession()
+  } finally {
+    currentUser.value = null
+    profileOpen.value = false
+    categories.value = []
+    products.value = []
+  }
+}
+
+async function handleProfileSave(payload: { name: string; password: string }) {
+  try {
+    currentUser.value = await updateProfile(payload)
+    profileOpen.value = false
+  } catch {
+    showError('Não foi possível atualizar o perfil.')
+  }
 }
 
 async function handleCategoriesChanged() {
@@ -91,16 +113,31 @@ async function handleProductUpdated() {
   await loadProducts()
 }
 
+async function handleProductDelete(product: Product) {
+  if (!confirm(`Excluir o produto "${product.name}"?`)) {
+    return
+  }
+
+  try {
+    await deleteProduct(product.id)
+    await loadProducts()
+  } catch {
+    showError('Não foi possível excluir o produto.')
+  }
+}
+
 onMounted(async () => {
-  await Promise.all([loadCategories(), loadProducts()])
+  if (currentUser.value) {
+    await Promise.all([loadCategories(), loadProducts()])
+  }
 })
 </script>
 
 <template>
-  <LoginView v-if="!loggedUser" @login="handleLogin" />
+  <LoginView v-if="!currentUser" @login="handleLogin" />
 
   <main v-else class="app-layout">
-    <aside class="sidebar" aria-label="Navegacao principal">
+    <aside class="sidebar" aria-label="Navegação principal">
       <nav class="sidebar-nav">
         <button
           type="button"
@@ -124,28 +161,28 @@ onMounted(async () => {
           @click="activeTab = 'users'"
         >
           <Users :size="18" />
-          Usuarios
+          Usuários
         </button>
       </nav>
     </aside>
 
     <AppHeader
-      :user-name="loggedUser"
+      :user="currentUser"
       @logout="handleLogout"
       @open-profile="profileOpen = true"
     />
 
     <section class="content-area">
       <header class="page-heading">
-        <p class="eyebrow">Pagina atual</p>
-        <h1>{{ activeTab === 'products' ? 'Produtos' : activeTab === 'categories' ? 'Categorias' : 'Usuarios' }}</h1>
+        <p class="eyebrow">Página atual</p>
+        <h1>{{ activeTab === 'products' ? 'Produtos' : activeTab === 'categories' ? 'Categorias' : 'Usuários' }}</h1>
       </header>
 
       <section v-if="activeTab === 'categories'" class="tab-page">
         <CategoryManager :categories="categories" @changed="handleCategoriesChanged" />
       </section>
 
-      <UsersManager v-else-if="activeTab === 'users'" :current-user="loggedUser" />
+      <UsersManager v-else-if="activeTab === 'users'" :current-user="currentUser" />
 
       <section v-else class="tab-page">
         <div class="subtabs" aria-label="Abas de produtos">
@@ -170,7 +207,7 @@ onMounted(async () => {
         </div>
 
         <div v-else class="single-column">
-          <section class="toolbar" aria-label="Filtros do catalogo">
+          <section class="toolbar" aria-label="Filtros do catálogo">
             <label class="field compact-field">
               <span>Filtrar por nome</span>
               <input v-model="productNameFilter" placeholder="Notebook" />
@@ -191,14 +228,19 @@ onMounted(async () => {
             </button>
           </section>
 
-          <ProductList :products="filteredProducts" :loading="loadingProducts" @edit="editingProduct = $event" />
+          <ProductList
+            :products="filteredProducts"
+            :loading="loadingProducts"
+            @edit="editingProduct = $event"
+            @delete="handleProductDelete"
+          />
         </div>
       </section>
     </section>
 
     <UserProfileModal
       v-if="profileOpen"
-      :user-name="loggedUser"
+      :user="currentUser"
       @close="profileOpen = false"
       @logout="handleLogout"
       @save="handleProfileSave"

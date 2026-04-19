@@ -43,7 +43,7 @@ function inputType(type: string) {
       >
         <option value="">Selecione</option>
         <option value="true">Sim</option>
-        <option value="false">Nao</option>
+        <option value="false">Não</option>
       </select>
       <input
         v-else

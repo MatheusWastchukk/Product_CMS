@@ -8,16 +8,16 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record ProductRequestDTO(
-        @NotBlank(message = "Nome do produto e obrigatorio")
+        @NotBlank(message = "Nome do produto é obrigatório")
         String name,
 
         String description,
 
-        @NotNull(message = "Preco e obrigatorio")
-        @DecimalMin(value = "0.0", inclusive = true, message = "Preco nao pode ser negativo")
+        @NotNull(message = "Preço é obrigatório")
+        @DecimalMin(value = "0.0", inclusive = true, message = "Preço não pode ser negativo")
         BigDecimal price,
 
-        @NotNull(message = "Categoria e obrigatoria")
+        @NotNull(message = "Categoria é obrigatória")
         Long categoryId,
 
         @Valid

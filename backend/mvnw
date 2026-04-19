@@ -1,0 +1,4 @@
+#!/bin/sh
+basedir=$(dirname "$0")
+WRAPPER_JAR="$basedir/.mvn/wrapper/maven-wrapper.jar"
+exec java -classpath "$WRAPPER_JAR" -Dmaven.multiModuleProjectDirectory="$basedir" org.apache.maven.wrapper.MavenWrapperMain "$@"

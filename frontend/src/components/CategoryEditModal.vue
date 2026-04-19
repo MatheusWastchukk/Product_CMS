@@ -24,7 +24,7 @@ async function loadAttributes() {
   try {
     attributes.value = await getCategoryAttributes(props.category.id)
   } catch {
-    alert('Nao foi possivel carregar os atributos.')
+    alert('Não foi possível carregar os atributos.')
   } finally {
     loading.value = false
   }
@@ -46,7 +46,7 @@ async function submit() {
     await loadAttributes()
     emit('saved')
   } catch {
-    alert('Nao foi possivel adicionar os atributos.')
+    alert('Não foi possível adicionar os atributos.')
   } finally {
     saving.value = false
   }
@@ -61,7 +61,7 @@ onMounted(loadAttributes)
       <div class="section-heading">
         <p class="eyebrow">Categoria</p>
         <h2 id="edit-category-title">Editar {{ category.name }}</h2>
-        <p>Adicione novos atributos dinamicos para essa categoria.</p>
+        <p>Adicione novos atributos dinâmicos para essa categoria.</p>
       </div>
 
       <p v-if="loading" class="empty-note">Carregando atributos...</p>

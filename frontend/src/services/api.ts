@@ -1,9 +1,75 @@
 import axios from 'axios'
-import type { Category, CategoryAttribute, CategoryAttributePayload, Product, ProductPayload } from '../types/catalog'
+import type {
+  AppUser,
+  AuthResponse,
+  Category,
+  CategoryAttribute,
+  CategoryAttributePayload,
+  Product,
+  ProductPayload,
+  UserPayload,
+  UserUpdatePayload
+} from '../types/catalog'
+
+const TOKEN_KEY = 'productCmsToken'
+const USER_KEY = 'productCmsUser'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080'
+  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 })
+
+api.interceptors.request.use((config) => {
+  const token = getStoredToken()
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+export function getStoredToken() {
+  return localStorage.getItem(TOKEN_KEY)
+}
+
+export function getStoredUser(): AppUser | null {
+  const rawUser = localStorage.getItem(USER_KEY)
+  if (!rawUser) {
+    return null
+  }
+
+  try {
+    return JSON.parse(rawUser)
+  } catch {
+    clearSession()
+    return null
+  }
+}
+
+export function storeSession(auth: AuthResponse) {
+  localStorage.setItem(TOKEN_KEY, auth.token)
+  localStorage.setItem(USER_KEY, JSON.stringify(auth.user))
+}
+
+export function clearSession() {
+  localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(USER_KEY)
+}
+
+export async function login(username: string, password: string): Promise<AuthResponse> {
+  const { data } = await api.post<AuthResponse>('/auth/login', { username, password })
+  storeSession(data)
+  return data
+}
+
+export async function logout(): Promise<void> {
+  await api.post('/auth/logout')
+  clearSession()
+}
+
+export async function updateProfile(payload: { name: string; password: string }): Promise<AppUser> {
+  const { data } = await api.put<AppUser>('/auth/me', payload)
+  localStorage.setItem(USER_KEY, JSON.stringify(data))
+  return data
+}
 
 export async function getCategories(): Promise<Category[]> {
   const { data } = await api.get<Category[]>('/categories')
@@ -49,4 +115,27 @@ export async function createProduct(payload: ProductPayload): Promise<Product> {
 export async function updateProduct(productId: number, payload: ProductPayload): Promise<Product> {
   const { data } = await api.put<Product>(`/products/${productId}`, payload)
   return data
+}
+
+export async function deleteProduct(productId: number): Promise<void> {
+  await api.delete(`/products/${productId}`)
+}
+
+export async function getUsers(): Promise<AppUser[]> {
+  const { data } = await api.get<AppUser[]>('/users')
+  return data
+}
+
+export async function createUser(payload: UserPayload): Promise<AppUser> {
+  const { data } = await api.post<AppUser>('/users', payload)
+  return data
+}
+
+export async function updateUser(userId: number, payload: UserUpdatePayload): Promise<AppUser> {
+  const { data } = await api.put<AppUser>(`/users/${userId}`, payload)
+  return data
+}
+
+export async function deleteUser(userId: number): Promise<void> {
+  await api.delete(`/users/${userId}`)
 }

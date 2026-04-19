@@ -2,26 +2,28 @@
 import { computed, reactive } from 'vue'
 
 const emit = defineEmits<{
-  login: [userName: string]
+  login: [payload: { username: string; password: string }]
 }>()
 
 const form = reactive({
-  email: '',
+  username: '',
   password: ''
 })
 
 const canLogin = computed(() => {
-  return form.email.trim().length > 0 && form.password.trim().length > 0
+  return form.username.trim().length > 0 && form.password.trim().length > 0
 })
 
 function submit() {
   if (!canLogin.value) {
-    alert('Informe e-mail e senha para entrar.')
+    alert('Informe usuário e senha para entrar.')
     return
   }
 
-  const userName = form.email.split('@')[0] || 'Usuario'
-  emit('login', userName)
+  emit('login', {
+    username: form.username.trim(),
+    password: form.password
+  })
 }
 </script>
 
@@ -29,20 +31,20 @@ function submit() {
   <main class="login-screen">
     <section class="login-panel" aria-labelledby="login-title">
       <div class="login-brand">
-        <p class="eyebrow">AZ Tech case</p>
-        <h1 id="login-title">Acesse o catalogo</h1>
-        <p>Organize categorias, atributos dinamicos e produtos em um unico painel.</p>
+        <p class="eyebrow">Product Catalog CMS</p>
+        <h1 id="login-title">Acesse o catálogo</h1>
+        <p>Organize categorias, atributos dinâmicos e produtos em um único painel.</p>
       </div>
 
       <form class="login-form" @submit.prevent="submit">
         <label class="field">
-          <span>E-mail</span>
-          <input v-model="form.email" type="email" placeholder="admin@aztech.com" />
+          <span>Usuário</span>
+          <input v-model="form.username" autocomplete="username" placeholder="admin" />
         </label>
 
         <label class="field">
           <span>Senha</span>
-          <input v-model="form.password" type="password" placeholder="admin" />
+          <input v-model="form.password" autocomplete="current-password" type="password" placeholder="senha" />
         </label>
         <button type="submit" :disabled="!canLogin">Entrar</button>
       </form>

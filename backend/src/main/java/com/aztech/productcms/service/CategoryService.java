@@ -39,11 +39,11 @@ public class CategoryService {
     @Transactional
     public CategoryResponseDTO create(CategoryRequestDTO request) {
         String name = request.name().trim();
-        logger.info("Solicitada criacao de categoria: {}", name);
+        logger.info("Solicitada criação de categoria: {}", name);
 
         if (categoryRepository.existsByNameIgnoreCase(name)) {
-            logger.warn("Categoria ja cadastrada: {}", name);
-            throw new BusinessException("Categoria ja cadastrada");
+            logger.warn("Categoria já cadastrada: {}", name);
+            throw new BusinessException("Categoria já cadastrada");
         }
 
         Category category = categoryRepository.save(new Category(name));
@@ -61,21 +61,21 @@ public class CategoryService {
 
     @Transactional
     public void delete(Long categoryId) {
-        logger.info("Solicitada exclusao da categoria {}", categoryId);
+        logger.info("Solicitada exclusão da categoria {}", categoryId);
         Category category = findCategory(categoryId);
 
         if (productRepository.existsByCategoryId(categoryId)) {
-            logger.warn("Categoria {} nao pode ser excluida porque possui produtos", categoryId);
+            logger.warn("Categoria {} não pode ser excluída porque possui produtos", categoryId);
             throw new BusinessException("Categoria possui produtos cadastrados");
         }
 
         categoryRepository.delete(category);
-        logger.info("Categoria {} excluida", categoryId);
+        logger.info("Categoria {} excluída", categoryId);
     }
 
     @Transactional
     public List<CategoryAttributeResponseDTO> addAttributes(Long categoryId, CategoryAttributeRequestDTO request) {
-        logger.info("Solicitada adicao de atributos para categoria {}: {}", categoryId, request.attributes());
+        logger.info("Solicitada adição de atributos para categoria {}: {}", categoryId, request.attributes());
         Category category = findCategory(categoryId);
 
         request.attributes().stream()
@@ -112,7 +112,7 @@ public class CategoryService {
 
     private Category findCategory(Long categoryId) {
         return categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Categoria nao encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada"));
     }
 
     private CategoryResponseDTO toResponse(Category category) {

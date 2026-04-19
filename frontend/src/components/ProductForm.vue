@@ -51,7 +51,7 @@ watch(
     try {
       dynamicAttributes.value = await getCategoryAttributes(categoryId)
     } catch {
-      showError('Nao foi possivel carregar os atributos da categoria.')
+      showError('Não foi possível carregar os atributos da categoria.')
     } finally {
       loadingAttributes.value = false
     }
@@ -67,7 +67,7 @@ function handleAttributeChange(attribute: ProductAttribute) {
 
 async function submit() {
   if (!canSubmit.value || form.categoryId === null) {
-    showError('Preencha nome, preco e categoria antes de salvar.')
+    showError('Preencha nome, preço e categoria antes de salvar.')
     return
   }
 
@@ -92,7 +92,7 @@ async function submit() {
     feedback.value = 'Produto cadastrado com sucesso.'
     emit('created')
   } catch {
-    showError('Nao foi possivel salvar o produto. Confira os dados e tente novamente.')
+    showError('Não foi possível salvar o produto. Confira os dados e tente novamente.')
   } finally {
     saving.value = false
   }
@@ -119,13 +119,13 @@ function showError(message: string) {
       </label>
 
       <label class="field">
-        <span>Descricao</span>
+        <span>Descrição</span>
         <textarea v-model="form.description" placeholder="Detalhes principais do produto"></textarea>
       </label>
 
       <div class="form-grid">
         <label class="field">
-          <span>Preco</span>
+          <span>Preço</span>
           <input v-model.number="form.price" type="number" min="0" step="0.01" />
         </label>
 
@@ -142,7 +142,7 @@ function showError(message: string) {
 
       <div class="attributes-block">
         <div>
-          <h3>Atributos dinamicos</h3>
+          <h3>Atributos dinâmicos</h3>
           <p v-if="loadingAttributes">Carregando atributos...</p>
         </div>
         <DynamicAttributesForm

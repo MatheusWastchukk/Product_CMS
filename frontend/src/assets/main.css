@@ -515,6 +515,26 @@ button:disabled {
   resize: vertical;
 }
 
+.check-field {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--blue-900);
+  font-weight: 800;
+}
+
+.check-field input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--orange-600);
+}
+
+.check-field span {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .compact-field {
   width: min(340px, 100%);
 }
