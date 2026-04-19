@@ -21,6 +21,9 @@ public class CategoryAttribute {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false, columnDefinition = "varchar(255) default 'string'")
+    private String type;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
@@ -29,7 +32,12 @@ public class CategoryAttribute {
     }
 
     public CategoryAttribute(String name, Category category) {
+        this(name, "string", category);
+    }
+
+    public CategoryAttribute(String name, String type, Category category) {
         this.name = name;
+        this.type = type;
         this.category = category;
     }
 
@@ -47,6 +55,14 @@ public class CategoryAttribute {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getType() {
+        return type == null || type.isBlank() ? "string" : type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public Category getCategory() {

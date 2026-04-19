@@ -5,6 +5,6 @@ import java.util.List;
 
 public record CategoryAttributeRequestDTO(
         @NotEmpty(message = "Informe ao menos um atributo")
-        List<String> attributes
+        List<CategoryAttributeDefinitionDTO> attributes
 ) {
 }

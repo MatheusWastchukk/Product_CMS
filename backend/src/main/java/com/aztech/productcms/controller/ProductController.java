@@ -29,12 +29,12 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<ProductResponseDTO> list(@RequestParam(required = false) Long categoryId) {
+    public List<ProductResponseDTO> list(@RequestParam(name = "categoryId", required = false) Long categoryId) {
         return productService.list(categoryId);
     }
 
     @GetMapping("/{id}")
-    public ProductResponseDTO findById(@PathVariable Long id) {
+    public ProductResponseDTO findById(@PathVariable("id") Long id) {
         return productService.findById(id);
     }
 
@@ -45,7 +45,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ProductResponseDTO update(@PathVariable Long id, @Valid @RequestBody ProductRequestDTO request) {
+    public ProductResponseDTO update(@PathVariable("id") Long id, @Valid @RequestBody ProductRequestDTO request) {
         return productService.update(id, request);
     }
 }

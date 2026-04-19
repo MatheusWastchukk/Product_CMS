@@ -34,7 +34,7 @@ public class DataSeeder implements CommandLineRunner {
 
         attributes.stream()
                 .filter(attribute -> !attributeRepository.existsByCategoryIdAndNameIgnoreCase(category.getId(), attribute))
-                .map(attribute -> new CategoryAttribute(attribute, category))
+                .map(attribute -> new CategoryAttribute(attribute, "string", category))
                 .forEach(attributeRepository::save);
     }
 }

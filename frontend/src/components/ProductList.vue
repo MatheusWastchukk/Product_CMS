@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Edit3 } from 'lucide-vue-next'
 import type { Product } from '../types/catalog'
 
 defineProps<{
@@ -31,27 +32,42 @@ function formatPrice(price: number) {
       Nenhum produto cadastrado ainda.
     </p>
 
-    <div v-else class="product-list">
-      <article v-for="product in products" :key="product.id" class="product-card">
-        <div>
-          <p class="product-category">{{ product.categoryName }}</p>
-          <h3>{{ product.name }}</h3>
-          <p>{{ product.description || 'Sem descricao informada.' }}</p>
-        </div>
-
-        <strong>{{ formatPrice(product.price) }}</strong>
-
-        <dl v-if="product.attributes.length > 0" class="attribute-list">
-          <template v-for="attribute in product.attributes" :key="attribute.name">
-            <dt>{{ attribute.name }}</dt>
-            <dd>{{ attribute.value }}</dd>
-          </template>
-        </dl>
-
-        <div class="card-actions">
-          <button type="button" class="secondary-button" @click="emit('edit', product)">Editar</button>
-        </div>
-      </article>
-    </div>
+    <table v-else class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Categoria</th>
+          <th>Preco</th>
+          <th>Atributos</th>
+          <th>Acoes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="product in products" :key="product.id">
+          <td>{{ product.id }}</td>
+          <td>
+            <strong>{{ product.name }}</strong>
+            <span class="table-description">{{ product.description || 'Sem descricao informada.' }}</span>
+          </td>
+          <td>{{ product.categoryName }}</td>
+          <td>{{ formatPrice(product.price) }}</td>
+          <td>
+            <div v-if="product.attributes.length > 0" class="attribute-chip-list">
+              <span v-for="attribute in product.attributes" :key="attribute.name" class="attribute-chip">
+                <strong>{{ attribute.name }}</strong>
+                {{ attribute.value }}
+              </span>
+            </div>
+            <span v-else class="empty-note">Sem atributos</span>
+          </td>
+          <td>
+            <button type="button" class="icon-button" title="Editar" @click="emit('edit', product)">
+              <Edit3 :size="17" />
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </section>
 </template>

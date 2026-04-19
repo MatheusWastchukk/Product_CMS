@@ -11,8 +11,20 @@ const emit = defineEmits<{
 }>()
 
 function updateValue(name: string, event: Event) {
-  const input = event.target as HTMLInputElement
-  emit('change', { name, value: input.value })
+  const field = event.target as HTMLInputElement | HTMLSelectElement
+  emit('change', { name, value: field.value })
+}
+
+function inputType(type: string) {
+  if (type === 'int' || type === 'decimal') {
+    return 'number'
+  }
+
+  if (type === 'date') {
+    return 'date'
+  }
+
+  return 'text'
 }
 </script>
 
@@ -24,9 +36,21 @@ function updateValue(name: string, event: Event) {
 
     <label v-for="attribute in attributes" :key="attribute.id" class="field">
       <span>{{ attribute.name }}</span>
-      <input
+      <select
+        v-if="attribute.type === 'boolean'"
         :value="values[attribute.name] ?? ''"
-        :placeholder="`Informe ${attribute.name}`"
+        @change="updateValue(attribute.name, $event)"
+      >
+        <option value="">Selecione</option>
+        <option value="true">Sim</option>
+        <option value="false">Nao</option>
+      </select>
+      <input
+        v-else
+        :type="inputType(attribute.type)"
+        :step="attribute.type === 'decimal' ? '0.01' : attribute.type === 'int' ? '1' : undefined"
+        :value="values[attribute.name] ?? ''"
+        :placeholder="`Informe ${attribute.name} (${attribute.type})`"
         @input="updateValue(attribute.name, $event)"
       />
     </label>

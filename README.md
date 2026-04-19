@@ -1,26 +1,36 @@
 # Product Catalog CMS
 
-Mini CMS de produtos criado como projeto de estudo fullstack para entrevista, usando Spring Boot no backend e Vue 3 com TypeScript no frontend.
+Sistema fullstack para gerenciamento de produtos, categorias e atributos dinamicos.
 
-## Objetivo
+O projeto possui uma API REST em Spring Boot e uma interface em Vue 3 com TypeScript. A proposta central e permitir que cada categoria defina seus proprios atributos e que o cadastro de produtos seja montado dinamicamente a partir dessa configuracao.
 
-O sistema permite cadastrar e listar produtos com atributos dinamicos definidos pela categoria. Por exemplo:
+## Funcionalidades
 
-- Eletronico: marca, voltagem, garantia
-- Roupa: tamanho, cor, material
-- Livro: autor, editora, paginas
-
-Esse fluxo demonstra API REST, modelagem relacional, regras de negocio, tratamento de erros, testes unitarios e um formulario Vue que muda conforme a categoria selecionada.
+- Cadastro e listagem de categorias
+- Cadastro de atributos por categoria
+- Cadastro, listagem, filtro e edicao de produtos
+- Atributos dinamicos por categoria
+- Tela local de usuarios
+- Login simulado no frontend
+- Tratamento global de erros na API
+- Testes unitarios na camada de service
+- Dados iniciais de categorias e atributos ao subir o backend
 
 ## Stack
 
+### Backend
+
 - Java 21
-- Spring Boot 3
+- Spring Boot
 - Spring Web
 - Spring Data JPA
 - Bean Validation
 - PostgreSQL
-- JUnit 5 e Mockito
+- JUnit 5
+- Mockito
+
+### Frontend
+
 - Vue 3
 - TypeScript
 - Vite
@@ -46,53 +56,83 @@ frontend/
     views/
 ```
 
-## Banco de dados
+## Configuracao do Ambiente
 
-O projeto esta configurado para usar PostgreSQL:
+O backend le as configuracoes de banco a partir de um arquivo `.env` dentro da pasta `backend`.
 
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/aztech_db
-spring.datasource.username=aztech_user
-spring.datasource.password=admin
-spring.jpa.hibernate.ddl-auto=update
+Crie o arquivo:
+
+```text
+backend/.env
 ```
 
-Ao subir o backend, a classe `DataSeeder` cria categorias e atributos iniciais.
+Use o arquivo [backend/.env.example](backend/.env.example) como referencia:
 
-## Como rodar
+```env
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/your_database
+SPRING_DATASOURCE_USERNAME=your_user
+SPRING_DATASOURCE_PASSWORD=your_password
+SPRING_JPA_HIBERNATE_DDL_AUTO=update
+SPRING_JPA_SHOW_SQL=false
+```
 
-### Backend
+O arquivo `.env` real nao deve ser versionado.
+
+## Como Executar
+
+### 1. Banco de Dados
+
+Crie um banco PostgreSQL e configure o arquivo `backend/.env` com a URL, usuario e senha do seu ambiente local.
+
+### 2. Backend
 
 Entre na pasta do backend:
 
 ```bash
 cd backend
+```
+
+Execute a API:
+
+```bash
 mvn spring-boot:run
 ```
 
-A API sobe em:
+Por padrao, a API fica disponivel em:
 
 ```text
 http://localhost:8080
 ```
 
-### Frontend
+Ao iniciar, a aplicacao cadastra dados iniciais para categorias e atributos.
+
+### 3. Frontend
 
 Entre na pasta do frontend:
 
 ```bash
 cd frontend
+```
+
+Instale as dependencias:
+
+```bash
 npm install
+```
+
+Execute a interface:
+
+```bash
 npm run dev
 ```
 
-A interface sobe em:
+Por padrao, a interface fica disponivel em:
 
 ```text
 http://localhost:5173
 ```
 
-## Endpoints
+## Endpoints Principais
 
 ### Categorias
 
@@ -103,22 +143,6 @@ GET /categories/{id}/attributes
 POST /categories/{id}/attributes
 ```
 
-Exemplo para criar categoria:
-
-```json
-{
-  "name": "Eletronico"
-}
-```
-
-Exemplo para adicionar atributos:
-
-```json
-{
-  "attributes": ["marca", "voltagem", "garantia"]
-}
-```
-
 ### Produtos
 
 ```http
@@ -126,9 +150,28 @@ GET /products
 GET /products?categoryId=1
 GET /products/{id}
 POST /products
+PUT /products/{id}
 ```
 
-Exemplo para criar produto:
+## Exemplos de Requisicao
+
+### Criar categoria
+
+```json
+{
+  "name": "Eletronico"
+}
+```
+
+### Adicionar atributos em uma categoria
+
+```json
+{
+  "attributes": ["marca", "voltagem", "garantia"]
+}
+```
+
+### Criar produto
 
 ```json
 {
@@ -144,34 +187,19 @@ Exemplo para criar produto:
 }
 ```
 
-## Regras de negocio
-
-- Produto precisa ter uma categoria valida.
-- Nome do produto e obrigatorio.
-- Preco nao pode ser negativo.
-- Atributos enviados no produto precisam existir na categoria selecionada.
-- Categoria inexistente retorna erro 404.
-
 ## Testes
 
-Os testes unitarios cobrem a camada de service:
-
-- cria produto com categoria e atributos validos
-- rejeita produto quando a categoria nao existe
-- rejeita atributo que nao pertence a categoria
-
-Execute com:
+Execute os testes do backend com:
 
 ```bash
 cd backend
 mvn test
 ```
 
-## Pontos para explicar na entrevista
+Os testes cobrem regras de negocio da camada de service, incluindo criacao de produto, categoria inexistente e atributos invalidos.
 
-- DTOs separam contrato da API das entidades JPA.
-- Services concentram regras de negocio e deixam controllers mais simples.
-- Repositories encapsulam acesso ao banco com Spring Data JPA.
-- O frontend usa `watch` para buscar atributos quando a categoria muda.
-- O formulario dinamico monta o payload final com campos fixos e atributos preenchidos.
-- Os testes validam comportamento de negocio sem depender de banco real.
+## Observacoes
+
+- O frontend espera a API em `http://localhost:8080`.
+- O CORS do backend permite chamadas vindas de portas locais, como `5173` e `5174`.
+- A tela de usuarios e o login atual sao locais no frontend.

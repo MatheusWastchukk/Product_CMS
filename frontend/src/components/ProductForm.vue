@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { Save } from 'lucide-vue-next'
 import DynamicAttributesForm from './DynamicAttributesForm.vue'
 import { createProduct, getCategoryAttributes } from '../services/api'
 import type { Category, CategoryAttribute, ProductAttribute, ProductPayload } from '../types/catalog'
@@ -154,6 +155,7 @@ function showError(message: string) {
       <p v-if="feedback" class="message success">{{ feedback }}</p>
 
       <button type="submit" :disabled="!canSubmit">
+        <Save :size="18" />
         {{ saving ? 'Salvando...' : 'Salvar produto' }}
       </button>
     </form>

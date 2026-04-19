@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Category, CategoryAttribute, Product, ProductPayload } from '../types/catalog'
+import type { Category, CategoryAttribute, CategoryAttributePayload, Product, ProductPayload } from '../types/catalog'
 
 const api = axios.create({
   baseURL: 'http://localhost:8080'
@@ -22,12 +22,16 @@ export async function getCategoryAttributes(categoryId: number): Promise<Categor
 
 export async function addCategoryAttributes(
   categoryId: number,
-  attributes: string[]
+  attributes: CategoryAttributePayload[]
 ): Promise<CategoryAttribute[]> {
   const { data } = await api.post<CategoryAttribute[]>(`/categories/${categoryId}/attributes`, {
     attributes
   })
   return data
+}
+
+export async function deleteCategory(categoryId: number): Promise<void> {
+  await api.delete(`/categories/${categoryId}`)
 }
 
 export async function getProducts(categoryId?: number | null): Promise<Product[]> {

@@ -1,5 +1,10 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
+import { Plus, UserRound } from 'lucide-vue-next'
+
+const props = defineProps<{
+  currentUser: string
+}>()
 
 interface AppUser {
   id: number
@@ -16,10 +21,27 @@ const form = reactive({
 function loadUsers() {
   const savedUsers = localStorage.getItem('productCmsUsers')
   users.value = savedUsers ? JSON.parse(savedUsers) : []
+  ensureCurrentUser()
 }
 
 function saveUsers() {
   localStorage.setItem('productCmsUsers', JSON.stringify(users.value))
+}
+
+function ensureCurrentUser() {
+  if (!props.currentUser) {
+    return
+  }
+
+  const exists = users.value.some((user) => user.name.toLowerCase() === props.currentUser.toLowerCase())
+  if (!exists) {
+    users.value.unshift({
+      id: Date.now(),
+      name: props.currentUser,
+      password: 'senha'
+    })
+    saveUsers()
+  }
 }
 
 function createUser() {
@@ -73,7 +95,10 @@ onMounted(loadUsers)
           <input v-model="form.name" placeholder="Maria Silva" />
         </label>
 
-        <button type="submit">Criar usuario</button>
+        <button type="submit">
+          <Plus :size="18" />
+          Criar usuario
+        </button>
       </form>
     </section>
 
@@ -84,12 +109,25 @@ onMounted(loadUsers)
         <p>Lista mantida localmente no navegador.</p>
       </div>
 
-      <div v-if="users.length > 0" class="user-list">
-        <article v-for="user in users" :key="user.id" class="user-card">
-          <strong>{{ user.name }}</strong>
-          <span>Senha padrao: {{ user.password }}</span>
-        </article>
-      </div>
+      <table v-if="users.length > 0" class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Usuario</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="user in users" :key="user.id">
+            <td>{{ user.id }}</td>
+            <td>
+              <span class="user-cell">
+                <UserRound :size="17" />
+                {{ user.name }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
       <p v-else class="empty-note">Nenhum usuario criado ainda.</p>
     </section>
   </section>

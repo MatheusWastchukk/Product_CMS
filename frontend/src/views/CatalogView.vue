@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { Boxes, Tags, Users } from 'lucide-vue-next'
 import AppHeader from '../components/AppHeader.vue'
 import CategoryManager from '../components/CategoryManager.vue'
 import LoginView from '../components/LoginView.vue'
@@ -106,6 +107,7 @@ onMounted(async () => {
           :class="{ active: activeTab === 'products' }"
           @click="activeTab = 'products'"
         >
+          <Boxes :size="18" />
           Produtos
         </button>
         <button
@@ -113,6 +115,7 @@ onMounted(async () => {
           :class="{ active: activeTab === 'categories' }"
           @click="activeTab = 'categories'"
         >
+          <Tags :size="18" />
           Categorias
         </button>
         <button
@@ -120,6 +123,7 @@ onMounted(async () => {
           :class="{ active: activeTab === 'users' }"
           @click="activeTab = 'users'"
         >
+          <Users :size="18" />
           Usuarios
         </button>
       </nav>
@@ -141,7 +145,7 @@ onMounted(async () => {
         <CategoryManager :categories="categories" @changed="handleCategoriesChanged" />
       </section>
 
-      <UsersManager v-else-if="activeTab === 'users'" />
+      <UsersManager v-else-if="activeTab === 'users'" :current-user="loggedUser" />
 
       <section v-else class="tab-page">
         <div class="subtabs" aria-label="Abas de produtos">

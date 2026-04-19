@@ -10,29 +10,44 @@ import com.aztech.productcms.model.Category;
 import com.aztech.productcms.model.CategoryAttribute;
 import com.aztech.productcms.repository.CategoryAttributeRepository;
 import com.aztech.productcms.repository.CategoryRepository;
+import com.aztech.productcms.repository.ProductRepository;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CategoryService {
 
+    private static final Logger logger = LoggerFactory.getLogger(CategoryService.class);
+
     private final CategoryRepository categoryRepository;
     private final CategoryAttributeRepository attributeRepository;
+    private final ProductRepository productRepository;
 
-    public CategoryService(CategoryRepository categoryRepository, CategoryAttributeRepository attributeRepository) {
+    public CategoryService(
+            CategoryRepository categoryRepository,
+            CategoryAttributeRepository attributeRepository,
+            ProductRepository productRepository
+    ) {
         this.categoryRepository = categoryRepository;
         this.attributeRepository = attributeRepository;
+        this.productRepository = productRepository;
     }
 
     @Transactional
     public CategoryResponseDTO create(CategoryRequestDTO request) {
         String name = request.name().trim();
+        logger.info("Solicitada criacao de categoria: {}", name);
+
         if (categoryRepository.existsByNameIgnoreCase(name)) {
+            logger.warn("Categoria ja cadastrada: {}", name);
             throw new BusinessException("Categoria ja cadastrada");
         }
 
         Category category = categoryRepository.save(new Category(name));
+        logger.info("Categoria criada com id {} e nome {}", category.getId(), category.getName());
         return toResponse(category);
     }
 
@@ -45,16 +60,39 @@ public class CategoryService {
     }
 
     @Transactional
+    public void delete(Long categoryId) {
+        logger.info("Solicitada exclusao da categoria {}", categoryId);
+        Category category = findCategory(categoryId);
+
+        if (productRepository.existsByCategoryId(categoryId)) {
+            logger.warn("Categoria {} nao pode ser excluida porque possui produtos", categoryId);
+            throw new BusinessException("Categoria possui produtos cadastrados");
+        }
+
+        categoryRepository.delete(category);
+        logger.info("Categoria {} excluida", categoryId);
+    }
+
+    @Transactional
     public List<CategoryAttributeResponseDTO> addAttributes(Long categoryId, CategoryAttributeRequestDTO request) {
+        logger.info("Solicitada adicao de atributos para categoria {}: {}", categoryId, request.attributes());
         Category category = findCategory(categoryId);
 
         request.attributes().stream()
-                .map(String::trim)
-                .filter(attribute -> !attribute.isBlank())
+                .map(attribute -> new AttributeInput(attribute.name().trim(), attribute.type().trim().toLowerCase()))
+                .filter(attribute -> !attribute.name().isBlank() && !attribute.type().isBlank())
                 .distinct()
-                .filter(attribute -> !attributeRepository.existsByCategoryIdAndNameIgnoreCase(categoryId, attribute))
-                .map(attribute -> new CategoryAttribute(attribute, category))
-                .forEach(attributeRepository::save);
+                .filter(attribute -> !attributeRepository.existsByCategoryIdAndNameIgnoreCase(categoryId, attribute.name()))
+                .map(attribute -> new CategoryAttribute(attribute.name(), attribute.type(), category))
+                .forEach(attribute -> {
+                    CategoryAttribute savedAttribute = attributeRepository.save(attribute);
+                    logger.info(
+                            "Atributo criado com id {} para categoria {}: {}",
+                            savedAttribute.getId(),
+                            categoryId,
+                            savedAttribute.getName()
+                    );
+                });
 
         return listAttributes(categoryId);
     }
@@ -64,7 +102,11 @@ public class CategoryService {
         findCategory(categoryId);
         return attributeRepository.findByCategoryId(categoryId)
                 .stream()
-                .map(attribute -> new CategoryAttributeResponseDTO(attribute.getId(), attribute.getName()))
+                .map(attribute -> new CategoryAttributeResponseDTO(
+                        attribute.getId(),
+                        attribute.getName(),
+                        attribute.getType()
+                ))
                 .toList();
     }
 
@@ -75,5 +117,8 @@ public class CategoryService {
 
     private CategoryResponseDTO toResponse(Category category) {
         return new CategoryResponseDTO(category.getId(), category.getName());
+    }
+
+    private record AttributeInput(String name, String type) {
     }
 }

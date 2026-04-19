@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { Save } from 'lucide-vue-next'
 import { getCategoryAttributes, updateProduct } from '../services/api'
 import type { Category, CategoryAttribute, Product, ProductAttribute, ProductPayload } from '../types/catalog'
 import DynamicAttributesForm from './DynamicAttributesForm.vue'
@@ -146,7 +147,10 @@ async function submit() {
 
         <div class="profile-actions">
           <button type="button" class="ghost-button" @click="emit('close')">Cancelar</button>
-          <button type="submit" :disabled="!canSubmit">{{ saving ? 'Salvando...' : 'Salvar produto' }}</button>
+          <button type="submit" :disabled="!canSubmit">
+            <Save :size="18" />
+            {{ saving ? 'Salvando...' : 'Salvar produto' }}
+          </button>
         </div>
       </form>
     </section>

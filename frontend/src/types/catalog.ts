@@ -6,6 +6,14 @@ export interface Category {
 export interface CategoryAttribute {
   id: number
   name: string
+  type: AttributeType
+}
+
+export type AttributeType = 'string' | 'int' | 'decimal' | 'boolean' | 'date'
+
+export interface CategoryAttributePayload {
+  name: string
+  type: AttributeType
 }
 
 export interface ProductAttribute {
