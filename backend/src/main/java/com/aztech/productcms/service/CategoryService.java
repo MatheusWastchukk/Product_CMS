@@ -14,6 +14,8 @@ import com.aztech.productcms.repository.ProductRepository;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,11 +54,9 @@ public class CategoryService {
     }
 
     @Transactional(readOnly = true)
-    public List<CategoryResponseDTO> list() {
-        return categoryRepository.findAll()
-                .stream()
-                .map(this::toResponse)
-                .toList();
+    public Page<CategoryResponseDTO> list(Pageable pageable) {
+        return categoryRepository.findAll(pageable)
+                .map(this::toResponse);
     }
 
     @Transactional
@@ -94,12 +94,6 @@ public class CategoryService {
                     );
                 });
 
-        return listAttributes(categoryId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<CategoryAttributeResponseDTO> listAttributes(Long categoryId) {
-        findCategory(categoryId);
         return attributeRepository.findByCategoryId(categoryId)
                 .stream()
                 .map(attribute -> new CategoryAttributeResponseDTO(
@@ -108,6 +102,17 @@ public class CategoryService {
                         attribute.getType()
                 ))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CategoryAttributeResponseDTO> listAttributes(Long categoryId, Pageable pageable) {
+        findCategory(categoryId);
+        return attributeRepository.findByCategoryId(categoryId, pageable)
+                .map(attribute -> new CategoryAttributeResponseDTO(
+                        attribute.getId(),
+                        attribute.getName(),
+                        attribute.getType()
+                ));
     }
 
     private Category findCategory(Long categoryId) {

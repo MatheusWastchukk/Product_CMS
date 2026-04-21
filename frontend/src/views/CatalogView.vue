@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { Boxes, Tags, Users } from 'lucide-vue-next'
 import AppHeader from '../components/AppHeader.vue'
 import CategoryManager from '../components/CategoryManager.vue'
@@ -20,7 +20,7 @@ import {
   logout,
   updateProfile
 } from '../services/api'
-import type { AppUser, Category, Product } from '../types/catalog'
+import type { AppUser, Category, PageResponse, Product } from '../types/catalog'
 
 const currentUser = ref<AppUser | null>(getStoredToken() ? getStoredUser() : null)
 const profileOpen = ref(false)
@@ -28,27 +28,25 @@ const activeTab = ref<'categories' | 'products' | 'users'>('products')
 const activeProductTab = ref<'create' | 'list'>('create')
 const editingProduct = ref<Product | null>(null)
 const categories = ref<Category[]>([])
+const categoryOptions = ref<Category[]>([])
 const products = ref<Product[]>([])
+const categoriesPage = ref<PageResponse<Category> | null>(null)
+const productsPage = ref<PageResponse<Product> | null>(null)
 const productNameFilter = ref('')
 const selectedCategoryFilter = ref<number | null>(null)
 const loadingProducts = ref(false)
 const loadingCategories = ref(false)
-
-const filteredProducts = computed(() => {
-  const name = productNameFilter.value.trim().toLowerCase()
-
-  return products.value.filter((product) => {
-    const matchesName = !name || product.name.toLowerCase().includes(name)
-    const matchesCategory = !selectedCategoryFilter.value || product.categoryId === selectedCategoryFilter.value
-
-    return matchesName && matchesCategory
-  })
-})
+const categoryPageNumber = ref(0)
+const productPageNumber = ref(0)
+const pageSize = 10
 
 async function loadCategories() {
   loadingCategories.value = true
   try {
-    categories.value = await getCategories()
+    const page = await getCategories({ page: categoryPageNumber.value, size: pageSize })
+    categoriesPage.value = page
+    categories.value = page.content
+    categoryOptions.value = (await getCategories({ page: 0, size: 1000 })).content
   } catch {
     showError('Não foi possível carregar as categorias.')
   } finally {
@@ -59,13 +57,35 @@ async function loadCategories() {
 async function loadProducts() {
   loadingProducts.value = true
   try {
-    products.value = await getProducts()
+    const page = await getProducts({
+      page: productPageNumber.value,
+      size: pageSize,
+      categoryId: selectedCategoryFilter.value,
+      name: productNameFilter.value.trim()
+    })
+    productsPage.value = page
+    products.value = page.content
   } catch {
     showError('Não foi possível carregar os produtos.')
   } finally {
     loadingProducts.value = false
   }
 }
+
+async function changeCategoryPage(page: number) {
+  categoryPageNumber.value = page
+  await loadCategories()
+}
+
+async function changeProductPage(page: number) {
+  productPageNumber.value = page
+  await loadProducts()
+}
+
+watch([productNameFilter, selectedCategoryFilter], async () => {
+  productPageNumber.value = 0
+  await loadProducts()
+})
 
 function showError(message: string) {
   alert(message)
@@ -90,6 +110,7 @@ async function handleLogout() {
     currentUser.value = null
     profileOpen.value = false
     categories.value = []
+    categoryOptions.value = []
     products.value = []
   }
 }
@@ -179,7 +200,13 @@ onMounted(async () => {
       </header>
 
       <section v-if="activeTab === 'categories'" class="tab-page">
-        <CategoryManager :categories="categories" @changed="handleCategoriesChanged" />
+        <CategoryManager
+          :categories="categories"
+          :page-info="categoriesPage"
+          :loading="loadingCategories"
+          @changed="handleCategoriesChanged"
+          @page-change="changeCategoryPage"
+        />
       </section>
 
       <UsersManager v-else-if="activeTab === 'users'" :current-user="currentUser" />
@@ -203,7 +230,7 @@ onMounted(async () => {
         </div>
 
         <div v-if="activeProductTab === 'create'" class="single-column">
-          <ProductForm :categories="categories" @created="loadProducts" />
+          <ProductForm :categories="categoryOptions" @created="loadProducts" />
         </div>
 
         <div v-else class="single-column">
@@ -217,7 +244,7 @@ onMounted(async () => {
               <span>Filtrar por categoria</span>
               <select v-model.number="selectedCategoryFilter" :disabled="loadingCategories">
                 <option :value="null">Todas</option>
-                <option v-for="category in categories" :key="category.id" :value="category.id">
+                <option v-for="category in categoryOptions" :key="category.id" :value="category.id">
                   {{ category.name }}
                 </option>
               </select>
@@ -229,8 +256,10 @@ onMounted(async () => {
           </section>
 
           <ProductList
-            :products="filteredProducts"
+            :products="products"
             :loading="loadingProducts"
+            :page-info="productsPage"
+            @page-change="changeProductPage"
             @edit="editingProduct = $event"
             @delete="handleProductDelete"
           />
@@ -249,7 +278,7 @@ onMounted(async () => {
     <ProductEditModal
       v-if="editingProduct"
       :product="editingProduct"
-      :categories="categories"
+      :categories="categoryOptions"
       @close="editingProduct = null"
       @saved="handleProductUpdated"
     />

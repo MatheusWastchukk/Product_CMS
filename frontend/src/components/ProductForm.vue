@@ -49,7 +49,7 @@ watch(
 
     loadingAttributes.value = true
     try {
-      dynamicAttributes.value = await getCategoryAttributes(categoryId)
+      dynamicAttributes.value = (await getCategoryAttributes(categoryId, { size: 100 })).content
     } catch {
       showError('Não foi possível carregar os atributos da categoria.')
     } finally {

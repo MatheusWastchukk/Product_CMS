@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -93,20 +95,24 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductResponseDTO> list(Long categoryId) {
-        List<Product> products;
-        if (categoryId == null) {
-            products = productRepository.findAll();
-        } else {
+    public Page<ProductResponseDTO> list(Long categoryId, String name, Pageable pageable) {
+        String normalizedName = name == null ? "" : name.trim();
+
+        Page<Product> products;
+        if (categoryId != null) {
             if (!categoryRepository.existsById(categoryId)) {
                 throw new ResourceNotFoundException("Categoria não encontrada");
             }
-            products = productRepository.findByCategoryId(categoryId);
+            products = normalizedName.isBlank()
+                    ? productRepository.findByCategoryId(categoryId, pageable)
+                    : productRepository.findByCategoryIdAndNameContainingIgnoreCase(categoryId, normalizedName, pageable);
+        } else if (normalizedName.isBlank()) {
+            products = productRepository.findAll(pageable);
+        } else {
+            products = productRepository.findByNameContainingIgnoreCase(normalizedName, pageable);
         }
 
-        return products.stream()
-                .map(this::toResponse)
-                .toList();
+        return products.map(this::toResponse);
     }
 
     @Transactional(readOnly = true)

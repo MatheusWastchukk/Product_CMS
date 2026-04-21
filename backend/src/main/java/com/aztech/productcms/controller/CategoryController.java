@@ -4,9 +4,12 @@ import com.aztech.productcms.dto.CategoryAttributeRequestDTO;
 import com.aztech.productcms.dto.CategoryAttributeResponseDTO;
 import com.aztech.productcms.dto.CategoryRequestDTO;
 import com.aztech.productcms.dto.CategoryResponseDTO;
+import com.aztech.productcms.dto.PageResponseDTO;
 import com.aztech.productcms.service.CategoryService;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,8 +33,8 @@ public class CategoryController {
     }
 
     @GetMapping
-    public List<CategoryResponseDTO> list() {
-        return categoryService.list();
+    public PageResponseDTO<CategoryResponseDTO> list(@PageableDefault(size = 10, sort = "name") Pageable pageable) {
+        return PageResponseDTO.from(categoryService.list(pageable));
     }
 
     @PostMapping
@@ -47,8 +50,11 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}/attributes")
-    public List<CategoryAttributeResponseDTO> listAttributes(@PathVariable("id") Long id) {
-        return categoryService.listAttributes(id);
+    public PageResponseDTO<CategoryAttributeResponseDTO> listAttributes(
+            @PathVariable("id") Long id,
+            @PageableDefault(size = 10, sort = "name") Pageable pageable
+    ) {
+        return PageResponseDTO.from(categoryService.listAttributes(id, pageable));
     }
 
     @PostMapping("/{id}/attributes")

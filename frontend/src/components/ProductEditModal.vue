@@ -49,7 +49,7 @@ watch(
 
     loadingAttributes.value = true
     try {
-      dynamicAttributes.value = await getCategoryAttributes(categoryId)
+      dynamicAttributes.value = (await getCategoryAttributes(categoryId, { size: 100 })).content
       dynamicAttributes.value.forEach((attribute) => {
         const current = props.product.attributes.find((item) => item.name === attribute.name)
         attributeValues[attribute.name] = current?.value ?? ''

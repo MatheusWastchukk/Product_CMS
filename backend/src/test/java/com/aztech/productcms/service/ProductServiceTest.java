@@ -25,6 +25,9 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -131,6 +134,98 @@ class ProductServiceTest {
         BusinessException exception = assertThrows(BusinessException.class, () -> productService.create(request));
 
         assertTrue(exception.getMessage().contains("Atributo inválido"));
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    void shouldListProductsWithPaginationAndNameFilter() {
+        Category category = new Category("Eletrônico");
+        category.setId(1L);
+        Product product = new Product("Notebook Pro", "Ultrafino", BigDecimal.valueOf(7000), category);
+        product.setId(20L);
+
+        PageRequest pageable = PageRequest.of(0, 10);
+        when(productRepository.findByNameContainingIgnoreCase("Notebook", pageable))
+                .thenReturn(new PageImpl<>(List.of(product), pageable, 1));
+
+        Page<ProductResponseDTO> response = productService.list(null, " Notebook ", pageable);
+
+        assertEquals(1, response.getTotalElements());
+        assertEquals("Notebook Pro", response.getContent().getFirst().name());
+    }
+
+    @Test
+    void shouldListProductsByCategoryWithPagination() {
+        Category category = new Category("Livros");
+        category.setId(3L);
+        Product product = new Product("Clean Code", "Livro", BigDecimal.valueOf(120), category);
+        product.setId(30L);
+
+        PageRequest pageable = PageRequest.of(0, 10);
+        when(categoryRepository.existsById(3L)).thenReturn(true);
+        when(productRepository.findByCategoryId(3L, pageable)).thenReturn(new PageImpl<>(List.of(product), pageable, 1));
+
+        Page<ProductResponseDTO> response = productService.list(3L, "", pageable);
+
+        assertEquals(1, response.getTotalElements());
+        assertEquals("Livros", response.getContent().getFirst().categoryName());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenListingProductsFromUnknownCategory() {
+        PageRequest pageable = PageRequest.of(0, 10);
+        when(categoryRepository.existsById(99L)).thenReturn(false);
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> productService.list(99L, null, pageable)
+        );
+
+        assertEquals("Categoria não encontrada", exception.getMessage());
+        verify(productRepository, never()).findByCategoryId(99L, pageable);
+    }
+
+    @Test
+    void shouldUpdateProductAndPublishEvent() {
+        Category oldCategory = new Category("Antiga");
+        oldCategory.setId(1L);
+        Category newCategory = new Category("Nova");
+        newCategory.setId(2L);
+        Product product = new Product("Nome antigo", "Descrição antiga", BigDecimal.TEN, oldCategory);
+        product.setId(40L);
+
+        ProductRequestDTO request = new ProductRequestDTO(
+                "Nome novo",
+                "Descrição nova",
+                BigDecimal.valueOf(99),
+                2L,
+                List.of(new ProductAttributeDTO("cor", "preto"))
+        );
+
+        when(productRepository.findById(40L)).thenReturn(Optional.of(product));
+        when(categoryRepository.findById(2L)).thenReturn(Optional.of(newCategory));
+        when(attributeRepository.findByCategoryId(2L)).thenReturn(List.of(new CategoryAttribute("cor", newCategory)));
+        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ProductResponseDTO response = productService.update(40L, request);
+
+        assertEquals("Nome novo", response.name());
+        assertEquals("Nova", response.categoryName());
+        assertEquals(1, response.attributes().size());
+        verify(eventPublisher).publish("UPDATED", product);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUpdatingUnknownProduct() {
+        ProductRequestDTO request = new ProductRequestDTO("Produto", "", BigDecimal.ONE, 1L, List.of());
+        when(productRepository.findById(404L)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> productService.update(404L, request)
+        );
+
+        assertEquals("Produto não encontrado", exception.getMessage());
         verify(productRepository, never()).save(any(Product.class));
     }
 }

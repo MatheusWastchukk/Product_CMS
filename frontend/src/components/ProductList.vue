@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { Edit3, Trash2 } from 'lucide-vue-next'
-import type { Product } from '../types/catalog'
+import type { PageResponse, Product } from '../types/catalog'
+import PaginationControls from './PaginationControls.vue'
 
 defineProps<{
   products: Product[]
   loading: boolean
+  pageInfo: PageResponse<Product> | null
 }>()
 
 const emit = defineEmits<{
   edit: [product: Product]
   delete: [product: Product]
+  pageChange: [page: number]
 }>()
 
 function formatPrice(price: number) {
@@ -75,5 +78,14 @@ function formatPrice(price: number) {
         </tr>
       </tbody>
     </table>
+
+    <PaginationControls
+      v-if="pageInfo"
+      :page="pageInfo.page"
+      :total-pages="pageInfo.totalPages"
+      :total-elements="pageInfo.totalElements"
+      :loading="loading"
+      @change="emit('pageChange', $event)"
+    />
   </section>
 </template>

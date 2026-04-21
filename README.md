@@ -108,12 +108,19 @@ Na raiz do projeto, crie um arquivo `.env` usando [.env.example](.env.example) c
 ```env
 POSTGRES_DB=aztech_db
 POSTGRES_USER=aztech_user
-POSTGRES_PASSWORD=change_me
+POSTGRES_PASSWORD=admin
 ```
 
 Suba todos os serviços:
 
 ```bash
+docker compose up --build
+```
+
+Se o container do PostgreSQL jÃ¡ tiver sido criado antes com outra senha, o volume preserva a credencial antiga. Nesse caso, ajuste o `.env` para a senha anterior ou recrie o banco com:
+
+```bash
+docker compose down -v
 docker compose up --build
 ```
 
@@ -133,6 +140,13 @@ Senha: guest
 ```
 
 O backend cria um usuário inicial da aplicação para acesso administrativo. Novos usuários são criados pela tela de usuários e recebem a senha padrão.
+
+Credencial inicial da aplicação:
+
+```text
+Usuário: admin
+Senha: senha
+```
 
 ## Como Executar Manualmente
 

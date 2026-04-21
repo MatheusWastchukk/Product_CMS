@@ -5,11 +5,17 @@ import type {
   Category,
   CategoryAttribute,
   CategoryAttributePayload,
+  PageResponse,
   Product,
   ProductPayload,
   UserPayload,
   UserUpdatePayload
 } from '../types/catalog'
+
+export interface PageRequest {
+  page?: number
+  size?: number
+}
 
 const TOKEN_KEY = 'productCmsToken'
 const USER_KEY = 'productCmsUser'
@@ -71,8 +77,8 @@ export async function updateProfile(payload: { name: string; password: string })
   return data
 }
 
-export async function getCategories(): Promise<Category[]> {
-  const { data } = await api.get<Category[]>('/categories')
+export async function getCategories(params: PageRequest = {}): Promise<PageResponse<Category>> {
+  const { data } = await api.get<PageResponse<Category>>('/categories', { params })
   return data
 }
 
@@ -81,8 +87,11 @@ export async function createCategory(name: string): Promise<Category> {
   return data
 }
 
-export async function getCategoryAttributes(categoryId: number): Promise<CategoryAttribute[]> {
-  const { data } = await api.get<CategoryAttribute[]>(`/categories/${categoryId}/attributes`)
+export async function getCategoryAttributes(
+  categoryId: number,
+  params: PageRequest = { size: 100 }
+): Promise<PageResponse<CategoryAttribute>> {
+  const { data } = await api.get<PageResponse<CategoryAttribute>>(`/categories/${categoryId}/attributes`, { params })
   return data
 }
 
@@ -100,9 +109,13 @@ export async function deleteCategory(categoryId: number): Promise<void> {
   await api.delete(`/categories/${categoryId}`)
 }
 
-export async function getProducts(categoryId?: number | null): Promise<Product[]> {
-  const { data } = await api.get<Product[]>('/products', {
-    params: categoryId ? { categoryId } : undefined
+export async function getProducts(params: PageRequest & { categoryId?: number | null; name?: string } = {}): Promise<PageResponse<Product>> {
+  const { data } = await api.get<PageResponse<Product>>('/products', {
+    params: {
+      ...params,
+      categoryId: params.categoryId || undefined,
+      name: params.name || undefined
+    }
   })
   return data
 }
@@ -121,8 +134,8 @@ export async function deleteProduct(productId: number): Promise<void> {
   await api.delete(`/products/${productId}`)
 }
 
-export async function getUsers(): Promise<AppUser[]> {
-  const { data } = await api.get<AppUser[]>('/users')
+export async function getUsers(params: PageRequest = {}): Promise<PageResponse<AppUser>> {
+  const { data } = await api.get<PageResponse<AppUser>>('/users', { params })
   return data
 }
 

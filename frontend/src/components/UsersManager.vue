@@ -2,16 +2,20 @@
 import { onMounted, reactive, ref } from 'vue'
 import { Edit3, Plus, RotateCcw, Save, Trash2, UserRound, X } from 'lucide-vue-next'
 import { createUser, deleteUser, getUsers, updateUser } from '../services/api'
-import type { AppUser } from '../types/catalog'
+import type { AppUser, PageResponse } from '../types/catalog'
+import PaginationControls from './PaginationControls.vue'
 
 const props = defineProps<{
   currentUser: AppUser
 }>()
 
 const users = ref<AppUser[]>([])
+const usersPage = ref<PageResponse<AppUser> | null>(null)
 const activeUserTab = ref<'create' | 'list'>('create')
 const editingUser = ref<AppUser | null>(null)
 const loading = ref(false)
+const currentPage = ref(0)
+const pageSize = 10
 
 const form = reactive({
   name: '',
@@ -29,12 +33,19 @@ const editForm = reactive({
 async function loadUsers() {
   loading.value = true
   try {
-    users.value = await getUsers()
+    const page = await getUsers({ page: currentPage.value, size: pageSize })
+    usersPage.value = page
+    users.value = page.content
   } catch {
     alert('Não foi possível carregar os usuários.')
   } finally {
     loading.value = false
   }
+}
+
+async function changePage(page: number) {
+  currentPage.value = page
+  await loadUsers()
 }
 
 async function createNewUser() {
@@ -209,6 +220,15 @@ onMounted(loadUsers)
         </tbody>
       </table>
       <p v-else class="empty-note">Nenhum usuário criado ainda.</p>
+
+      <PaginationControls
+        v-if="usersPage"
+        :page="usersPage.page"
+        :total-pages="usersPage.totalPages"
+        :total-elements="usersPage.totalElements"
+        :loading="loading"
+        @change="changePage"
+      />
     </section>
 
     <div v-if="editingUser" class="profile-backdrop" role="presentation" @click.self="editingUser = null">

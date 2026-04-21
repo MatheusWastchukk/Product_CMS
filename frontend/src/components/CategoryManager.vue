@@ -2,15 +2,19 @@
 import { reactive, ref } from 'vue'
 import { Edit3, Plus, Trash2, X } from 'lucide-vue-next'
 import { addCategoryAttributes, createCategory, deleteCategory } from '../services/api'
-import type { AttributeType, Category } from '../types/catalog'
+import type { AttributeType, Category, PageResponse } from '../types/catalog'
 import CategoryEditModal from './CategoryEditModal.vue'
+import PaginationControls from './PaginationControls.vue'
 
 defineProps<{
   categories: Category[]
+  pageInfo: PageResponse<Category> | null
+  loading: boolean
 }>()
 
 const emit = defineEmits<{
   changed: []
+  pageChange: [page: number]
 }>()
 
 const activeCategoryTab = ref<'create' | 'list'>('create')
@@ -186,7 +190,9 @@ async function removeCategory(category: Category) {
       </div>
 
       <div class="category-browser">
-        <table v-if="categories.length > 0" class="data-table">
+        <p v-if="loading" class="empty-note">Carregando categorias...</p>
+
+        <table v-else-if="categories.length > 0" class="data-table">
           <thead>
             <tr>
               <th>ID</th>
@@ -212,6 +218,15 @@ async function removeCategory(category: Category) {
           </tbody>
         </table>
         <p v-else class="empty-note">Nenhuma categoria cadastrada ainda.</p>
+
+        <PaginationControls
+          v-if="pageInfo"
+          :page="pageInfo.page"
+          :total-pages="pageInfo.totalPages"
+          :total-elements="pageInfo.totalElements"
+          :loading="loading"
+          @change="emit('pageChange', $event)"
+        />
       </div>
     </section>
 

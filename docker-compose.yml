@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-aztech_db}
       POSTGRES_USER: ${POSTGRES_USER:-aztech_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aztech_password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
     ports:
       - "5432:5432"
     volumes:
@@ -35,7 +35,7 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-aztech_db}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-aztech_user}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-aztech_password}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-admin}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "false"
       SPRING_RABBITMQ_HOST: rabbitmq

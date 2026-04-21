@@ -2,7 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { Plus } from 'lucide-vue-next'
 import { addCategoryAttributes, getCategoryAttributes } from '../services/api'
-import type { AttributeType, Category, CategoryAttribute } from '../types/catalog'
+import type { AttributeType, Category, CategoryAttribute, PageResponse } from '../types/catalog'
+import PaginationControls from './PaginationControls.vue'
 
 const props = defineProps<{
   category: Category
@@ -14,6 +15,8 @@ const emit = defineEmits<{
 }>()
 
 const attributes = ref<CategoryAttribute[]>([])
+const attributesPage = ref<PageResponse<CategoryAttribute> | null>(null)
+const currentPage = ref(0)
 const newAttributeName = ref('')
 const newAttributeType = ref<AttributeType>('string')
 const loading = ref(false)
@@ -22,12 +25,19 @@ const saving = ref(false)
 async function loadAttributes() {
   loading.value = true
   try {
-    attributes.value = await getCategoryAttributes(props.category.id)
+    const page = await getCategoryAttributes(props.category.id, { page: currentPage.value, size: 5 })
+    attributesPage.value = page
+    attributes.value = page.content
   } catch {
     alert('Não foi possível carregar os atributos.')
   } finally {
     loading.value = false
   }
+}
+
+async function changePage(page: number) {
+  currentPage.value = page
+  await loadAttributes()
 }
 
 async function submit() {
@@ -82,6 +92,15 @@ onMounted(loadAttributes)
         </tbody>
       </table>
       <p v-else class="empty-note">Nenhum atributo cadastrado.</p>
+
+      <PaginationControls
+        v-if="attributesPage"
+        :page="attributesPage.page"
+        :total-pages="attributesPage.totalPages"
+        :total-elements="attributesPage.totalElements"
+        :loading="loading"
+        @change="changePage"
+      />
 
       <form class="profile-form" @submit.prevent="submit">
         <label class="field">

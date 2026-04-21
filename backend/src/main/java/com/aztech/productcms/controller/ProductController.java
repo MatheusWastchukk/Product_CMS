@@ -1,10 +1,12 @@
 package com.aztech.productcms.controller;
 
+import com.aztech.productcms.dto.PageResponseDTO;
 import com.aztech.productcms.dto.ProductRequestDTO;
 import com.aztech.productcms.dto.ProductResponseDTO;
 import com.aztech.productcms.service.ProductService;
 import jakarta.validation.Valid;
-import java.util.List;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,8 +32,12 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<ProductResponseDTO> list(@RequestParam(name = "categoryId", required = false) Long categoryId) {
-        return productService.list(categoryId);
+    public PageResponseDTO<ProductResponseDTO> list(
+            @RequestParam(name = "categoryId", required = false) Long categoryId,
+            @RequestParam(name = "name", required = false) String name,
+            @PageableDefault(size = 10, sort = "name") Pageable pageable
+    ) {
+        return PageResponseDTO.from(productService.list(categoryId, name, pageable));
     }
 
     @GetMapping("/{id}")

@@ -7,7 +7,8 @@ import com.aztech.productcms.exception.BusinessException;
 import com.aztech.productcms.exception.ResourceNotFoundException;
 import com.aztech.productcms.model.AppUser;
 import com.aztech.productcms.repository.AppUserRepository;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,11 +33,9 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserResponseDTO> list() {
-        return userRepository.findAll()
-                .stream()
-                .map(authService::toResponse)
-                .toList();
+    public Page<UserResponseDTO> list(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(authService::toResponse);
     }
 
     @Transactional
